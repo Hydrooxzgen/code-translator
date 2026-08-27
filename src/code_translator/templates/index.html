@@ -313,6 +313,10 @@
         <label>模型</label>
         <input class="model" id="model" type="text" placeholder="mimo-v2.5-free" />
       </div>
+      <div class="field" style="justify-content: flex-end;">
+        <label>&nbsp;</label>
+        <button class="btn btn-secondary" onclick="saveConfig()">💾 保存配置</button>
+      </div>
     </div>
 
     <!-- Supported combos (local mode) -->
@@ -511,8 +515,35 @@
       }
     });
 
+    // === Config persistence (localStorage) ===
+    const CONFIG_KEY = 'code-translator-config';
+
+    function saveConfig() {
+      const config = {
+        api_key: document.getElementById('apiKey').value,
+        base_url: document.getElementById('baseUrl').value,
+        model: document.getElementById('model').value,
+        mode: currentMode
+      };
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+      setStatus('✅ 配置已保存', 'success');
+    }
+
+    function loadConfig() {
+      try {
+        const raw = localStorage.getItem(CONFIG_KEY);
+        if (!raw) return;
+        const config = JSON.parse(raw);
+        if (config.api_key) document.getElementById('apiKey').value = config.api_key;
+        if (config.base_url) document.getElementById('baseUrl').value = config.base_url;
+        if (config.model) document.getElementById('model').value = config.model;
+        if (config.mode) setMode(config.mode);
+      } catch (e) {}
+    }
+
     // Init
     initLanguages();
+    loadConfig();
   </script>
 </body>
 </html>

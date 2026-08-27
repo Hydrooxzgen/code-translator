@@ -11,6 +11,6 @@ from code_translator.web import app
 import uvicorn
 
 if __name__ == "__main__":
-    print("🚀 启动 Web 界面: http://127.0.0.1:8000")
+    print(" Web 界面: http://127.0.0.1:8000")
     print("按 Ctrl+C 停止服务")
     uvicorn.run(app, host="127.0.0.1", port=8000)
