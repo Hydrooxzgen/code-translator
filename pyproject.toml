@@ -3,7 +3,7 @@ name = "code-translator"
 version = "0.1.0"
 description = "跨编程语言的代码翻译器"
 readme = "README.md"
-license = "MIT"
+license = "GPL-3.0-only"
 requires-python = ">=3.10"
 dependencies = [
     "typer>=0.12.0",
