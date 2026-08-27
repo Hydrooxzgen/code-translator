@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Code Translator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-dim: #8b949e;
+      --accent: #58a6ff;
+      --accent-hover: #79c0ff;
+      --green: #3fb950;
+      --red: #f85149;
+      --input-bg: #0d1117;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .header h1 span { color: var(--accent); }
+    .header .badge {
+      font-size: 11px;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    /* Main layout */
+    .main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+    /* Config bar */
+    .config-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .config-bar .field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .config-bar label {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+    .config-bar input, .config-bar select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .config-bar input:focus, .config-bar select:focus {
+      border-color: var(--accent);
+    }
+    .config-bar input.api-key {
+      width: 280px;
+    }
+    .config-bar input.base-url {
+      width: 300px;
+    }
+    .config-bar input.model {
+      width: 160px;
+    }
+
+    /* Language selectors */
+    .lang-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .lang-bar select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 15px;
+      outline: none;
+      min-width: 160px;
+      cursor: pointer;
+    }
+    .lang-bar select:focus { border-color: var(--accent); }
+    .lang-bar .arrow {
+      font-size: 20px;
+      color: var(--accent);
+      font-weight: bold;
+    }
+
+    /* Editor area */
+    .editors {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 0;
+      margin-bottom: 20px;
+      min-height: 420px;
+    }
+    .editor-panel {
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .editor-panel .panel-header {
+      padding: 10px 16px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .editor-panel textarea {
+      flex: 1;
+      width: 100%;
+      background: var(--surface);
+      color: var(--text);
+      border: none;
+      padding: 16px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+      tab-size: 4;
+    }
+    .editor-panel textarea::placeholder { color: var(--text-dim); }
+
+    .middle-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      gap: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .mode-btn {
+      background: var(--surface);
+      color: var(--text-dim);
+      border: none;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 0;
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .mode-btn:hover:not(.active) {
+      color: var(--text);
+      background: var(--border);
+    }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      color: var(--text);
+      border-color: var(--text-dim);
+    }
+    .btn-copy {
+      background: none;
+      color: var(--text-dim);
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .btn-copy:hover { color: var(--text); background: var(--border); }
+    .btn-clear {
+      background: none;
+      color: var(--text-dim);
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .btn-clear:hover { color: var(--red); }
+
+    /* Status */
+    .status {
+      padding: 12px 0;
+      font-size: 13px;
+      color: var(--text-dim);
+      min-height: 40px;
+    }
+    .status.error { color: var(--red); }
+    .status.success { color: var(--green); }
+
+    /* Loading spinner */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .editors {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .middle-bar {
+        flex-direction: row;
+        padding: 8px 0;
+      }
+      .config-bar { flex-direction: column; }
+      .config-bar input.api-key,
+      .config-bar input.base-url,
+      .config-bar input.model { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔤 Code <span>Translator</span></h1>
+    <span class="badge">v0.1.0</span>
+  </div>
+
+  <div class="main">
+    <!-- Mode Switch -->
+    <div class="config-bar" style="margin-bottom: 12px;">
+      <div class="field">
+        <label>翻译模式</label>
+        <div style="display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+          <button class="btn mode-btn active" id="modeLocal" onclick="setMode('local')">🏠 本地模式 (免费)</button>
+          <button class="btn mode-btn" id="modeAI" onclick="setMode('ai')">🤖 AI 模式</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Config (AI mode) -->
+    <div class="config-bar" id="aiConfig" style="display: none;">
+      <div class="field">
+        <label>API Key</label>
+        <input class="api-key" id="apiKey" type="password" placeholder="sk-..." />
+      </div>
+      <div class="field">
+        <label>Base URL</label>
+        <input class="base-url" id="baseUrl" type="text" placeholder="https://opencode.ai/zen/v1" />
+      </div>
+      <div class="field">
+        <label>模型</label>
+        <input class="model" id="model" type="text" placeholder="mimo-v2.5-free" />
+      </div>
+    </div>
+
+    <!-- Supported combos (local mode) -->
+    <div class="config-bar" id="localInfo">
+      <div class="field" style="width: 100%;">
+        <label>📌 本地模式支持的翻译方向</label>
+        <div style="font-size: 13px; color: var(--text-dim); padding: 4px 0;">
+          Python → JavaScript / TypeScript / Go / Java / Rust &nbsp;|&nbsp;
+          JavaScript → Python &nbsp;|&nbsp; Go → Python
+        </div>
+      </div>
+    </div>
+
+    <!-- Language bar -->
+    <div class="lang-bar">
+      <select id="sourceLang"></select>
+      <span class="arrow">→</span>
+      <select id="targetLang"></select>
+      <button class="btn btn-primary" id="translateBtn" onclick="doTranslate()">
+        🔄 翻译
+      </button>
+    </div>
+
+    <!-- Editors -->
+    <div class="editors">
+      <div class="editor-panel">
+        <div class="panel-header">
+          <span>📥 输入代码</span>
+          <button class="btn-clear" onclick="clearInput()">清空</button>
+        </div>
+        <textarea id="sourceCode" placeholder="在这里粘贴或输入代码..."></textarea>
+      </div>
+
+      <div class="middle-bar">
+        <button class="btn btn-primary" id="translateBtn2" onclick="doTranslate()">→</button>
+      </div>
+
+      <div class="editor-panel">
+        <div class="panel-header">
+          <span>📤 翻译结果</span>
+          <button class="btn-copy" onclick="copyResult()">📋 复制</button>
+        </div>
+        <textarea id="outputCode" readonly placeholder="翻译结果将显示在这里..."></textarea>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    // Language data
+    const LANGUAGES = {
+      python: "Python",
+      javascript: "JavaScript",
+      typescript: "TypeScript",
+      go: "Go",
+      java: "Java",
+      rust: "Rust",
+      c: "C",
+      cpp: "C++",
+      csharp: "C#",
+      ruby: "Ruby",
+      php: "PHP",
+      swift: "Swift",
+      kotlin: "Kotlin",
+      scala: "Scala"
+    };
+
+    let currentMode = "local";
+
+    function setMode(mode) {
+      currentMode = mode;
+      const aiConfig = document.getElementById("aiConfig");
+      const localInfo = document.getElementById("localInfo");
+      const modeLocal = document.getElementById("modeLocal");
+      const modeAI = document.getElementById("modeAI");
+      if (mode === "local") {
+        aiConfig.style.display = "none";
+        localInfo.style.display = "flex";
+        modeLocal.classList.add("active");
+        modeAI.classList.remove("active");
+      } else {
+        aiConfig.style.display = "flex";
+        localInfo.style.display = "none";
+        modeLocal.classList.remove("active");
+        modeAI.classList.add("active");
+      }
+    }
+
+    // Init language selectors
+    function initLanguages() {
+      const src = document.getElementById("sourceLang");
+      const tgt = document.getElementById("targetLang");
+      for (const [key, name] of Object.entries(LANGUAGES)) {
+        src.add(new Option(name, key));
+        tgt.add(new Option(name, key));
+      }
+      src.value = "python";
+      tgt.value = "javascript";
+    }
+
+    // Translate
+    async function doTranslate() {
+      const code = document.getElementById("sourceCode").value.trim();
+      if (!code) {
+        setStatus("请输入要翻译的代码", "error");
+        return;
+      }
+
+      const apiKey = document.getElementById("apiKey").value.trim();
+      if (currentMode === "ai" && !apiKey) {
+        setStatus("AI 模式需要填写 API Key", "error");
+        return;
+      }
+
+      const btn = document.getElementById("translateBtn");
+      const btn2 = document.getElementById("translateBtn2");
+      btn.disabled = true;
+      btn2.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> 翻译中...';
+      btn2.innerHTML = '<span class="spinner"></span>';
+      setStatus("正在翻译，请稍候...", "");
+
+      try {
+        const resp = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            code: code,
+            source_lang: document.getElementById("sourceLang").value,
+            target_lang: document.getElementById("targetLang").value,
+            api_key: apiKey,
+            base_url: document.getElementById("baseUrl").value.trim(),
+            model: document.getElementById("model").value.trim(),
+            mode: currentMode
+          })
+        });
+
+        const data = await resp.json();
+
+        if (data.error) {
+          setStatus("❌ " + data.error, "error");
+        } else {
+          document.getElementById("outputCode").value = data.translated_code;
+          let note = data.notes ? " (" + data.notes + ")" : "";
+          setStatus("✅ 翻译完成 (引擎: " + data.model + ")" + note, "success");
+        }
+      } catch (e) {
+        setStatus("❌ 请求失败: " + e.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn2.disabled = false;
+        btn.innerHTML = "🔄 翻译";
+        btn2.innerHTML = "→";
+      }
+    }
+
+    function setStatus(msg, type) {
+      const el = document.getElementById("status");
+      el.textContent = msg;
+      el.className = "status " + type;
+    }
+
+    function clearInput() {
+      document.getElementById("sourceCode").value = "";
+      document.getElementById("outputCode").value = "";
+      document.getElementById("status").textContent = "";
+    }
+
+    async function copyResult() {
+      const text = document.getElementById("outputCode").value;
+      if (!text) return;
+      await navigator.clipboard.writeText(text);
+      const btn = document.querySelector(".btn-copy");
+      btn.textContent = "✅ 已复制";
+      setTimeout(() => { btn.textContent = "📋 复制"; }, 1500);
+    }
+
+    // Tab key in textarea
+    document.getElementById("sourceCode").addEventListener("keydown", function(e) {
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+        this.selectionStart = this.selectionEnd = start + 4;
+      }
+    });
+
+    // Ctrl+Enter to translate
+    document.addEventListener("keydown", function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        doTranslate();
+      }
+    });
+
+    // Init
+    initLanguages();
+  </script>
+</body>
+</html>
