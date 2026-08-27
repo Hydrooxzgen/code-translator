@@ -1,0 +1,26 @@
+[project]
+name = "code-translator"
+version = "0.1.0"
+description = "跨编程语言的代码翻译器"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+dependencies = [
+    "typer>=0.12.0",
+    "openai>=1.0.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+code-translator = "code_translator.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/code_translator"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
